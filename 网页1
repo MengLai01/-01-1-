@@ -1,1 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>待办事项管理</title>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background-color: #f4f4f4;
+      padding: 20px;
+      margin: 0;
+    }
 
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    input, button, select {
+      margin: 5px;
+      padding: 8px;
+      font-size: 14px;
+    }
+
+    input[type="text"], input[type="datetime-local"] {
+      width: 30%;
+    }
+
+    .task {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fafafa;
+      padding: 10px;
+      border: 1px solid #ddd;
+      margin-top: 10px;
+      border-radius: 5px;
+      flex-wrap: wrap;
+    }
+
+    .task.done span {
+      text-decoration: line-through;
+      color: gray;
+    }
+
+    .task-buttons button {
+      margin-left: 5px;
+    }
+
+    @media (max-width: 600px) {
+      input[type="text"], input[type="datetime-local"] {
+        width: 100%;
+        margin-top: 5px;
+      }
+      .task {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .task-buttons {
+        margin-top: 5px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>待办事项管理系统</h1>
+
+    <div>
+      <input type="text" id="taskContent" placeholder="任务内容" />
+      <input type="datetime-local" id="taskTime" />
+      <input type="text" id="taskLocation" placeholder="地点" />
+      <button onclick="addTask()">添加</button>
+    </div>
+
+    <h2>待办事项</h2>
+    <div id="todoList"></div>
+
+    <h2>已完成事项</h2>
+    <div id="doneList"></div>
+  </div>
+
+  <script>
+    let tasks = [];
+
+    function addTask() {
+      const content = document.getElementById("taskContent").value.trim();
+      const time = document.getElementById("taskTime").value;
+      const location = document.getElementById("taskLocation").value.trim();
+
+      if (!content || !time) {
+        alert("请输入任务内容和时间！");
+        return;
+      }
+
+      const task = {
+        id: Date.now(),
+        content,
+        time,
+        location,
+        done: false
+      };
+
+      tasks.push(task);
+      sortAndRender();
+      clearInputs();
+    }
+
+    function clearInputs() {
+      document.getElementById("taskContent").value = "";
+      document.getElementById("taskTime").value = "";
+      document.getElementById("taskLocation").value = "";
+    }
+
+    function sortAndRender() {
+      const todoList = document.getElementById("todoList");
+      const doneList = document.getElementById("doneList");
+
+      todoList.innerHTML = "";
+      doneList.innerHTML = "";
+
+      tasks.sort((a, b) => new Date(a.time) - new Date(b.time));
+
+      tasks.forEach(task => {
+        const taskDiv = document.createElement("div");
+        taskDiv.className = "task" + (task.done ? " done" : "");
+        const taskInfo = document.createElement("span");
+        taskInfo.innerHTML = `<strong>${task.content}</strong> - ${task.location} - ${new Date(task.time).toLocaleString()}`;
+
+        const buttonDiv = document.createElement("div");
+        buttonDiv.className = "task-buttons";
+
+        if (!task.done) {
+          const completeBtn = document.createElement("button");
+          completeBtn.textContent = "完成";
+          completeBtn.onclick = () => completeTask(task.id);
+          buttonDiv.appendChild(completeBtn);
+
+          const editBtn = document.createElement("button");
+          editBtn.textContent = "修改";
+          editBtn.onclick = () => editTask(task.id);
+          buttonDiv.appendChild(editBtn);
+        }
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "删除";
+        deleteBtn.onclick = () => deleteTask(task.id);
+        buttonDiv.appendChild(deleteBtn);
+
+        taskDiv.appendChild(taskInfo);
+        taskDiv.appendChild(buttonDiv);
+
+        if (task.done) {
+          doneList.appendChild(taskDiv);
+        } else {
+          todoList.appendChild(taskDiv);
+        }
+      });
+    }
+
+    function completeTask(id) {
+      const task = tasks.find(t => t.id === id);
+      if (task) {
+        task.done = true;
+        sortAndRender();
+      }
+    }
+
+    function deleteTask(id) {
+      tasks = tasks.filter(t => t.id !== id);
+      sortAndRender();
+    }
+
+    function editTask(id) {
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+
+      const newContent = prompt("修改任务内容：", task.content);
+      const newLocation = prompt("修改地点：", task.location);
+      const newTime = prompt("修改时间（格式：2025-04-21T14:00）：", task.time);
+
+      if (newContent && newTime) {
+        task.content = newContent.trim();
+        task.location = newLocation.trim();
+        task.time = newTime;
+        sortAndRender();
+      }
+    }
+  </script>
+</body>
+</html>
